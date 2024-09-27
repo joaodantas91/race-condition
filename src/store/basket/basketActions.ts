@@ -6,15 +6,38 @@ import axios from 'axios'
 import BasketItem from '../../models/BasketItem';
 import { IState } from '../rootReducer';
 
-export function incrementItem(basketItem: BasketItem) {
-  return (dispatch: Dispatch<Action>, getState: () => IState) => {
+export function incrementItem (basketItem: BasketItem) {
+  return async (dispatch: Dispatch<Action>, getState: () => IState) => {
     const state: IState = getState();
 
-    // Call this same function after 3 seconds to avoid concurrency
+    // Call this same function after the previous one finish to avoid concurrency
     if (state.basket.calculatingBasketInApi) {
-      return setTimeout(() => {
-        return incrementItem(basketItem)(dispatch, getState);
-      }, 3000);
+      dispatch({
+        type: 'increment-queued-action'
+      });
+      await (new Promise<void>((resolve) => {
+        const checkState = () => {
+          const currentState = getState();
+          const targetState = currentState.basket.calculatingBasketInApi;
+
+          if (!targetState) {
+            resolve();
+          } else {
+            setTimeout(checkState, 100); // Poll every 100ms
+          }
+        };
+
+        checkState();
+      }))
+
+      return (() => {
+
+        incrementItem(basketItem)(dispatch, getState);
+
+        dispatch({
+          type: 'decrement-queued-action'
+        });
+      })();
     }
 
     dispatch({
@@ -63,16 +86,40 @@ export function incrementItem(basketItem: BasketItem) {
   }
 }
 
-export function decrementItem(basketItem: BasketItem) {
-  return (dispatch: Dispatch<Action>, getState: () => IState) => {
+export function decrementItem (basketItem: BasketItem) {
+  return async (dispatch: Dispatch<Action>, getState: () => IState) => {
     const state: IState = getState();
 
-    // Call this same function after 3 seconds to avoid concurrency
+    // Call this same function after the previous one finish to avoid concurrency
     if (state.basket.calculatingBasketInApi) {
-      return setTimeout(() => {
-        return incrementItem(basketItem)(dispatch, getState);
-      }, 3000);
+      dispatch({
+        type: 'increment-queued-action'
+      });
+      await (new Promise<void>((resolve) => {
+        const checkState = () => {
+          const currentState = getState();
+          const targetState = currentState.basket.calculatingBasketInApi;
+
+          if (!targetState) {
+            resolve();
+          } else {
+            setTimeout(checkState, 100); // Poll every 100ms
+          }
+        };
+
+        checkState();
+      }))
+
+      return (() => {
+
+        decrementItem(basketItem)(dispatch, getState);
+
+        dispatch({
+          type: 'decrement-queued-action'
+        });
+      })();
     }
+
 
     const foundItem = state.basket.items.find((item) => {
       return item.id === basketItem.id;
