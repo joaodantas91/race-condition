@@ -123,5 +123,3 @@ That's why I came up with the idea of creating an incremental queued-action, in 
 
 Another enhancement I made was to change the arbitrary 3 seconds to check the calculatingBasketInApi and added a promise that checks every 0.1s if the call has been completed and, after that, immediately starts the next call, so that it now depends exclusively on the completion time of the request
 
-Translated with DeepL.com (free version)
-
